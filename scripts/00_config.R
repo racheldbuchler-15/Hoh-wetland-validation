@@ -12,8 +12,6 @@ model_paths_file <- "/Users/rachelbuchler/Hoh-wetland-validation/data/model_path
 
 # validation data paths
 delineation_path <- "/Users/rachelbuchler/Hoh-wetland-validation/data/hoh_validation_points/Hoh Reservation Wetland Points.shp"
-hydric_pedons_path <- "/Users/rachelbuchler/Hoh-wetland-validation/data/soil_validation_points/KSL_pedons.shp"
-plant_data_path <- "/Users/rachelbuchler/Hoh-wetland-validation/data/plant_validation_points/WMVC_wet_dry_plants.shp"
 
 # AOI path
 aoi_path <- "/Users/rachelbuchler/Shared_data/Vector/hydrography/NHD_WA_HUC8/hoh_huc8_17100101.shp"
@@ -26,10 +24,10 @@ rasters_dir <- "/Users/rachelbuchler/Hoh-wetland-validation/outputs/classified_r
 
 # --- Model Parameters ----------------------------------------
 
-# f-beta value
+# f-1 value (we can also try F beta here todo this just change beta to 2) 
 # set greater than 1 to weight recall over precision
-# 2 = recall weighted, appropriate given cost of omission errors
-beta <- 2
+# 1 = F1 score (equal weight to precision and recall)
+beta <- 1
 
 # reference threshold for comparison
 reference_threshold <- 0.5
@@ -47,7 +45,7 @@ omission_flag_threshold <- 0.3
 # --- Projection ----------------------------------------------
 
 # target CRS for all spatial data
-# make sure this matches your model raster projection
+# this should matches model raster projection its faster project a shp then a tif
 target_crs <- "EPSG:2855"  
 
 # =============================================================
