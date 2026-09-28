@@ -8,19 +8,19 @@
 # --- Paths ---------------------------------------------------
 
 # model paths file
-model_paths_file <- "/Users/rachelbuchler/Hoh-wetland-validation/data/model_paths.txt"
+model_paths_file <- "E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\Data\\model_paths.txt"
 
 # validation data paths
-delineation_path <- "/Users/rachelbuchler/Hoh-wetland-validation/data/hoh_validation_points/Hoh Reservation Wetland Points.shp"
+delineation_path <- "E:\\Hoh_wetland_mapping_project\\Data_from_Hoh\\Data_from_Hoh_9_3\\Updated Hoh Wetland Points\\Updated Hoh Wetland Points\\Updated Hoh Wetland Data Points.shp"
 
 # AOI path
-aoi_path <- "/Users/rachelbuchler/Shared_data/Vector/hydrography/NHD_WA_HUC8/hoh_huc8_17100101.shp"
+aoi_path <- "E:\\Hoh_wetland_mapping_project\\Vector_data_for_mapping\\HOH_2022_aoi\\HOH_2022_AOI\\HOH_2022_AOI.shp"
 
 # output paths
-output_dir <- "/Users/rachelbuchler/Hoh-wetland-validation/outputs/"
-figures_dir <- "/Users/rachelbuchler/Hoh-wetland-validation/outputs/figures/"
-tables_dir <- "/Users/rachelbuchler/Hoh-wetland-validation/outputs/tables/"
-rasters_dir <- "/Users/rachelbuchler/Hoh-wetland-validation/outputs/classified_rasters/"
+output_dir <- "E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs"
+figures_dir <- "E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs\\figures"
+tables_dir <- "E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs\\tables"
+rasters_dir <- "E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs\\classified_rasters"
 
 # --- Model Parameters ----------------------------------------
 
@@ -31,12 +31,6 @@ beta <- 1
 
 # reference threshold for comparison
 reference_threshold <- 0.5
-
-# --- Validation Parameters -----------------------------------
-
-# wetland indicator statuses to include from plant data
-# OBL = obligate wetland, FACW = facultative wetland
-wetland_indicators <- c("OBL", "FACW")
 
 # minimum model probability to flag as potential omission error
 # in hydric soil check
