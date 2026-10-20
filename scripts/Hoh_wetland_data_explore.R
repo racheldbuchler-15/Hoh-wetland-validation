@@ -145,4 +145,11 @@ ggsave(file.path(figures_dir, "indicator_combination_counts.png"),
  
 cat("\n plots saved!\n")
   
+# --- Hydrology count among the 55 points with complete indicator data -----
+complete_indicators <- delineation %>%
+  filter(!is.na(Wetland_Hy) & !is.na(Hydric_Soi) & !is.na(Hydrophyti))
 
+cat("Points with all three indicators present:", nrow(complete_indicators), "\n")
+cat("Hydrology breakdown among those points:\n")
+print(table(complete_indicators$Wetland_Hy))
+sum(complete_indicators$Wetland_De == "Yes", na.rm = TRUE)
