@@ -14,9 +14,7 @@ library(dplyr)
 source("E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\scripts\\00_config.R")
 
 
-# --- Load Combined Field Dataset -------------------------------
-# one row per plot, ground-truth indicator columns + one probability
-# column per model (same combined table used in 02 and 04)
+# --- Load Field Dataset -------------------------------
 df <- read.csv(file.path(tables_dir, "delineation_all_models.csv"),
                 stringsAsFactors = FALSE)
  
@@ -28,14 +26,10 @@ model_cols <- c(
   "prob_hydric_covariates",
   "prob_hydric_covariates_SOLUS",
   "hoh_pred_all",
-  "joint_prob_times_rescaled"
+  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi"
 )
  
 # --- Model Display Labels ---------------------------------------
-# edit the right-hand side of each line to change how a model's name
-# appears in plot titles and the results table. File names on disk
-# still use the raw column name above, so nothing breaks if you
-# change these. Every model_cols entry must have an entry here.
 model_labels <- c(
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi" = "Tw WIP (topo + Sentinel 1/2)",
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi"       = " TW WIP (topo only)",
@@ -43,7 +37,10 @@ model_labels <- c(
   "prob_hydric_covariates"                                                 = "Hydric Soil Model",
   "prob_hydric_covariates_SOLUS"                                           = "Hydric Soil Model (SULUS)",
   "hoh_pred_all"                                                           = "HIP (Hydrophytic Plant Model)",
-  "joint_prob_times_rescaled"                                              = "Joint Probability"
+  "joint_prob_times_rescaled.tif."                                              = "Joint Probability",
+  "combined_wip_2023"                                                        = "1m WIP 2023",
+  "combined_wip_nwi"                                                        = "1m WIP NWI"
+
 )
 
 
@@ -63,7 +60,8 @@ results_table <- data.frame(
   ref_fbeta         = numeric(),
   stringsAsFactors  = FALSE
 )
- 
+ #we are using a beta of 1 here so we are effectively calculating F1 score where P and R are weighted equally. 
+ #If we wanted to weight recall more than precision we would set beta > 1. If we wanted to weight precision more than recall we would set beta < 1, this can be tuned in the config file.
 # --- Helper Function: Calculate F-beta -----------------------
 calc_fbeta <- function(predicted_binary, actual_binary, beta){
   TP <- sum(predicted_binary == 1 & actual_binary == 1)
@@ -143,7 +141,7 @@ for(model_name in model_cols){
   best_fbeta_threshold <- thresholds[which.max(fbeta_values)]
   cat("Best F-beta threshold:", round(best_fbeta_threshold, 3), "\n")
  
-  # --- Plot F-beta Across Thresholds -----------------------
+  # --- Plot F-1 Across Thresholds -----------------------
   fbeta_df <- data.frame(
     threshold = thresholds,
     fbeta     = fbeta_values,

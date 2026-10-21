@@ -28,7 +28,9 @@ model_cols <- c(
   "prob_hydric_covariates",
   "prob_hydric_covariates_SOLUS",
   "hoh_pred_all",
-  "joint_prob_times_rescaled"
+   "joint_prob_times_rescaled.tif.", 
+   "combined_wip_2023", 
+   "combined_wip_nwi"
 )
 
 # --- Model Display Labels ---------------------------------------
@@ -37,13 +39,15 @@ model_cols <- c(
 # nothing breaks if you change these. (same labels as 02 and 03 -
 # keep them in sync if you edit)
 model_labels <- c(
-  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi" = "Tw WIP (topo + Sentinel 1/2)",
-  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi"       = "TW WIP (topo only)",
-  "prob_NWI"                                                                = "WIP QC NWI",
-  "prob_hydric_covariates"                                                 = "Hydric Soil Model",
+  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi" = "4m TW WIP (topo + Sentinel 1/2)",
+  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi"       = "4m TW WIP (topo only)",
+  "prob_NWI"                                                                = "4m WIP QC NWI",
+  "prob_hydric_covariates"                                                 = "4m Hydric Soil Model",
   "prob_hydric_covariates_SOLUS"                                           = "Hydric Soil Model (SOLUS)",
-  "hoh_pred_all"                                                           = "HIP (Hydrophytic Plant Model)",
-  "joint_prob_times_rescaled"                                              = "Joint Probability"
+  "hoh_pred_all"                                                           = "10m HIP (Hydrophytic Plant Model)",
+  "joint_prob_times_rescaled.tif."                                              = "Joint Probability",
+  "combined_wip_2023"                                                        = "1m WIP QC NWI",
+  "combined_wip_nwi"                                                        = "1m WIP NWI"
 )
 
 # --- Combination Colors -------------------------------------------
@@ -291,12 +295,9 @@ cat(" larger mean_diff = model responds more strongly to that indicator)\n")
 cat("\nAll probability-pattern figures and tables complete.\n")
 cat("Figures saved to", figures_dir, "\n")
 cat("Tables saved to", tables_dir, "\n")
+
 # =============================================================
 # 4. HYDRIC SOIL ACROSS ALL MODELS - ONE COMBINED PLOT
-# Same idea as the single-indicator plots above, but flipped:
-# one chart, all 7 models on the x-axis, so you can directly
-# compare which models separate hydric-present from
-# hydric-absent most clearly.
 # =============================================================
 
 hydric_across_models <- single_indicator_long %>%
@@ -328,7 +329,7 @@ hydric_plot <- ggplot(hydric_across_models,
     subtitle = "points separated by hydric present/ absent",
     x = "Model", y = "Model Probability"
   ) +
-  theme_bw(base_size = 12) +
+  theme_bw(base_size = 16) +
   theme(plot.title = element_text(hjust = 0.5),
         plot.subtitle = element_text(hjust = 0.5, size = 9))
 
@@ -339,3 +340,153 @@ ggsave(
 
 cat("Hydric soil cross-model comparison figure saved\n")
 
+# =============================================================
+# 5. ARMY CORPS WETLANDS (ALL THREE INDICATORS) ACROSS MODELS
+# =============================================================
+
+# --- Choose which models to plot ------------------------------
+# any subset of model_cols; the order here is the order on the plot
+# (top to bottom)
+ace_plot_models <- c(
+ "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi",
+  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi",
+  "prob_NWI",
+  "combined_wip_2023",
+  "combined_wip_nwi"
+)
+# to plot every model instead:
+# ace_plot_models <- model_cols
+
+# catch typos in model names
+stopifnot(all(ace_plot_models %in% model_cols))
+
+ace_across_models <- long_df %>%
+  filter(model %in% ace_plot_models) %>%
+  mutate(
+    ace_wetland = factor(
+      ifelse(indicator_count == 3, "All three present", "Not all three"),
+      levels = c("Not all three", "All three present")
+    ),
+    # rev() because coord_flip puts the first level at the bottom
+    display_name = factor(model_labels[model],
+                          levels = rev(unname(model_labels[ace_plot_models])))
+  )
+
+ace_n <- ace_across_models %>%
+  group_by(display_name, ace_wetland) %>%
+  summarise(n = n(), .groups = "drop")
+
+ace_plot <- ggplot(ace_across_models,
+                   aes(x = display_name, y = model_prob, fill = ace_wetland)) +
+  geom_boxplot(alpha = 0.6, outlier.shape = NA,
+               position = position_dodge(width = 0.75)) +
+  geom_point(aes(group = ace_wetland),
+             position = position_jitterdodge(jitter.width = 0.15,
+                                             dodge.width = 0.75),
+             alpha = 0.4, size = 1.3) +
+  geom_text(
+    data = ace_n,
+    aes(x = display_name, y = 1.06, label = paste0("n=", n),
+        group = ace_wetland),
+    position = position_dodge(width = 0.75),
+    size = 3, color = "gray30", inherit.aes = FALSE
+  ) +
+  scale_fill_manual(values = c("Not all three"     = "#eb922d",
+                               "All three present" = "#218cac"),
+                    name = "Wetland Indicator") +
+  scale_y_continuous(limits = c(0, 1.1), breaks = seq(0, 1, 0.25)) +
+  coord_flip() +
+  labs(
+    title = "Model Probability at Wetlands, Across Models",
+    subtitle = "All three indicators (hydrology, hydric soil, hydrophytic vegetation) vs. fewer than three",
+    x = "Model", y = "Model Probability"
+  ) +
+  theme_bw(base_size = 16) +
+  theme(plot.title = element_text(hjust = 0.5),
+        plot.subtitle = element_text(hjust = 0.5, size = 12))
+
+ggsave(
+  filename = file.path(figures_dir, "army_corps_wetland_across_models.png"),
+  plot = ace_plot, width = 10, height = 7, dpi = 300
+)
+
+cat("Wetland cross-model comparison figure saved\n")
+
+
+# =============================================================
+# 6. SINGLE INDICATORS ACROSS SELECTED MODELS
+# (hydric soil, hydrophytic vegetation, wetland hydrology)
+# =============================================================
+
+# --- Choose which models to plot ------------------------------
+# same models as the Army Corps plot by default; replace with
+# your own vector of model_cols names to plot a different set
+indicator_plot_models <- ace_plot_models
+
+stopifnot(all(indicator_plot_models %in% model_cols))
+
+# --- Plotting function ----------------------------------------
+plot_indicator_across_models <- function(indicator_name, models, file_stub){
+
+  dat <- single_indicator_long %>%
+    filter(indicator == indicator_name, model %in% models) %>%
+    mutate(
+      # rev() because coord_flip puts the first level at the bottom
+      display_name = factor(model_labels[model],
+                            levels = rev(unname(model_labels[models])))
+    )
+
+  dat_n <- dat %>%
+    group_by(display_name, present) %>%
+    summarise(n = n(), .groups = "drop")
+
+  p <- ggplot(dat, aes(x = display_name, y = model_prob, fill = present)) +
+    geom_boxplot(alpha = 0.6, outlier.shape = NA,
+                 position = position_dodge(width = 0.75)) +
+    geom_point(aes(group = present),
+               position = position_jitterdodge(jitter.width = 0.15,
+                                               dodge.width = 0.75),
+               alpha = 0.4, size = 1.3) +
+    geom_text(
+      data = dat_n,
+      aes(x = display_name, y = 1.06, label = paste0("n=", n),
+          group = present),
+      position = position_dodge(width = 0.75),
+      size = 3, color = "gray30", inherit.aes = FALSE
+    ) +
+    scale_fill_manual(values = c("Absent"  = "#eb922d",
+                                 "Present" = "#218cac"),
+                      name = indicator_name) +
+    scale_y_continuous(limits = c(0, 1.1), breaks = seq(0, 1, 0.25)) +
+    coord_flip() +
+    labs(
+      title = paste0("Model Probability by ", indicator_name,
+                     " Presence, Across Models"),
+      subtitle = paste0("Points separated by ", tolower(indicator_name),
+                        " present / absent"),
+      x = "Model", y = "Model Probability"
+    ) +
+    theme_bw(base_size = 16) +
+    theme(plot.title = element_text(hjust = 0.5),
+          plot.subtitle = element_text(hjust = 0.5, size = 12))
+
+  ggsave(
+    filename = file.path(figures_dir, paste0(file_stub, "_selected_models.png")),
+    plot = p, width = 10, height = 7, dpi = 300
+  )
+
+  cat(indicator_name, "cross-model figure saved\n")
+  invisible(p)
+}
+
+# --- Make the three plots -------------------------------------
+# names must match the indicator labels in single_indicator_long
+indicator_files <- c(
+  "Hydric Soil"            = "hydric_soil",
+  "Hydrophytic Vegetation" = "hydrophytic_veg",
+  "Wetland Hydrology"      = "wetland_hydrology"
+)
+
+for(ind in names(indicator_files)){
+  plot_indicator_across_models(ind, indicator_plot_models, indicator_files[[ind]])
+}

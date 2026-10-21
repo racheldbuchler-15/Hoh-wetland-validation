@@ -6,7 +6,7 @@
 # =============================================================
 
 ##check DF naming (commant out as needed) 
-#df<- read.csv("E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs\\tables\\delineation_all_models.csv")
+df<- read.csv("E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs\\tables\\delineation_all_models.csv")
 
 #colnames(df)
 
@@ -21,11 +21,6 @@ library(tidyr)
 # --- Source Config -------------------------------------------
 source("E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\scripts\\00_config.R")
 
-# --- Load Combined Field Dataset -------------------------------
-# df should be your wide-format table: one row per plot, one column
-# per indicator ground truth, one column per model's probability.
-# Update this path to wherever this table lives / is saved from.
-# df <- readRDS(file.path(output_dir, "field_indicator_table.RDS"))
 
 # --- Define Model Columns --------------------------------------
 model_cols <- c(
@@ -35,7 +30,9 @@ model_cols <- c(
   "prob_hydric_covariates",
   "prob_hydric_covariates_SOLUS",
   "hoh_pred_all",
-  "joint_prob_times_rescaled"
+  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi"
+ 
+
 )
 
 # --- Model Display Labels ---------------------------------------
@@ -45,13 +42,15 @@ model_cols <- c(
 # breaks if you change these. Every model_cols entry must have an
 # entry here.
 model_labels <- c(
-  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi" = "Tw WIP (topo + Sentinel 1/2)",
-  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi"       = "TW WIP (topo only)",
-  "prob_NWI"                                                                = "WIP QC NWI",
-  "prob_hydric_covariates"                                                 = "Hydric Soil Model",
+  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi" = "4m TW WIP (topo + Sentinel 1/2)",
+  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi"       = "4m TW WIP (topo only)",
+  "prob_NWI"                                                                = "4m WIP QC NWI",
+  "prob_hydric_covariates"                                                 = "4m Hydric Soil Model",
   "prob_hydric_covariates_SOLUS"                                           = "Hydric Soil Model (SOLUS)",
-  "hoh_pred_all"                                                           = "HIP (Hydrophytic Plant Model)",
-  "joint_prob_times_rescaled"                                              = "Joint Probability"
+  "hoh_pred_all"                                                           = "10m HIP (Hydrophytic Plant Model)",
+  "joint_prob_times_rescaled.tif."                                              = "Joint Probability",
+  "combined_wip_2023"                                                        = "1m WIP QC NWI",
+  "combined_wip_nwi"                                                        = "1m WIP NWI"
 )
 
 # --- Define Indicator Levels -------------------------------------
@@ -292,3 +291,63 @@ ggsave(file.path(figures_dir, "F1_by_model_and_level.png"),
        plot = f1_plot, width = 10, height = 6, dpi = 300)
 
 cat("Summary figures saved to", figures_dir, "\n")
+
+# =============================================================
+# AUC PLOT FOR SELECTED MODELS ONLY
+# =============================================================
+
+# --- Choose which models to plot ------------------------------
+# any subset of model_cols; the order here is the order on the plot
+# (top to bottom)
+auc_plot_models <- c(
+   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi",
+  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi",
+  "prob_NWI",
+  "combined_wip_2023",
+  "combined_wip_nwi"
+)
+# --- Choose which indicator levels to show --------------------
+# must match the labels in levels_list; remove any you don't want
+# (e.g. drop "Overall Wetland Determination" to show just the
+# three indicators)
+auc_plot_levels <- c(
+  "Overall Wetland Determination",
+  "Wetland Hydrology",
+  "Hydric Soil",
+  "Hydrophytic Vegetation"
+)
+
+# catch typos
+stopifnot(all(auc_plot_models %in% model_cols))
+stopifnot(all(auc_plot_levels %in% names(level_colors)))
+
+auc_selected <- results_table %>%
+  filter(model %in% auc_plot_models,
+         level %in% auc_plot_levels) %>%
+  mutate(
+    # rev() because coord_flip puts the first level at the bottom
+    display_name = factor(display_name,
+                          levels = rev(unname(model_labels[auc_plot_models]))),
+    level = factor(level, levels = auc_plot_levels)
+  )
+
+auc_selected_plot <- ggplot(auc_selected,
+                            aes(x = display_name, y = AUC, fill = level)) +
+  geom_col(position = position_dodge2(width = 0.8, reverse = TRUE),
+           width = 0.7) +
+  # AUC = 0.5 is no better than random
+  geom_hline(yintercept = 0.5, linetype = "dashed", color = "gray40") +
+  coord_flip() +
+  scale_fill_manual(values = level_colors) +
+  scale_y_continuous(limits = c(0, 1), breaks = seq(0, 1, 0.25)) +
+  labs(
+    title = "AUC by Model Across Indicator Levels",
+    x = "Model", y = "AUC", fill = "Indicator Level"
+  ) +
+  theme_bw(base_size = 13) +
+  theme(plot.title = element_text(hjust = 0.5))
+
+ggsave(file.path(figures_dir, "AUC_by_model_and_level_selected.png"),
+       plot = auc_selected_plot, width = 10, height = 6, dpi = 300)
+
+cat("Selected-model AUC figure saved to", figures_dir, "\n")
