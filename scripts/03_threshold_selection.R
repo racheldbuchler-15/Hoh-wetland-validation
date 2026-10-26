@@ -6,7 +6,7 @@
 # =============================================================
 
 # --- Load Libraries ------------------------------------------
-library(pROC)
+library(pROC) #for ROC analysis and J here 
 library(ggplot2)
 library(dplyr)
 
@@ -26,7 +26,10 @@ model_cols <- c(
   "prob_hydric_covariates",
   "prob_hydric_covariates_SOLUS",
   "hoh_pred_all",
-  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi", "Hoh_WIP_Final_2855"
+  "joint_prob_times_rescaled.tif.", 
+  "combined_wip_2023", 
+  "combined_wip_nwi", 
+  "Hoh_WIP_Final_2855"
 )
  
 # --- Model Display Labels ---------------------------------------
@@ -41,7 +44,6 @@ model_labels <- c(
   "combined_wip_2023"                                                        = "1m WIP 2023",
   "combined_wip_nwi"                                                        = "1m WIP NWI",
   "Hoh_WIP_Final_2855"                                                      = "4m WIP (Final 2023 Paper)"
-
 
 )
 
@@ -66,9 +68,11 @@ results_table <- data.frame(
   ref_fbeta         = numeric(),
   stringsAsFactors  = FALSE
 )
- #we are using a beta of 1 here so we are effectively calculating F1 score where P and R are weighted equally. 
- #If we wanted to weight recall more than precision we would set beta > 1. If we wanted to weight precision more than recall we would set beta < 1, this can be tuned in the config file.
+
 # --- Helper Function: Calculate F-beta -----------------------
+ #we are using a beta of 1 here so we are effectively calculating F1 score where P and R are weighted equally. 
+ #If we wanted to weight recall more than precision we would set beta > 1. 
+ #If we wanted to weight precision more than recall we would set beta < 1, this can be tuned in the config file.
 calc_fbeta <- function(predicted_binary, actual_binary, beta){
   TP <- sum(predicted_binary == 1 & actual_binary == 1)
   FP <- sum(predicted_binary == 1 & actual_binary == 0)
@@ -93,7 +97,7 @@ for(model_name in model_cols){
   # --- Prepare This Model's Data -----------------------------
   # (overall Wetland_De determination only - this script is not
   #  level-stratified; see 04_indicator_probability_patterns.R
-  #  for the hydrology/hydric/veg-specific descriptive work)
+  #  for the hydrology/hydric/veg-specific work)
   model_df <- df %>%
     select(Wetland_De, model_prob = all_of(model_name)) %>%
     filter(Wetland_De %in% c("Yes", "No")) %>%

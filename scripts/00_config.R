@@ -24,22 +24,10 @@ rasters_dir <- "E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs\
 
 # --- Model Parameters ----------------------------------------
 
-# f-1 value (we can also try F beta here todo this just change beta to 2) 
+# f-1 value (we can also try F beta here todo this just change beta to 2)
 # set greater than 1 to weight recall over precision
 # 1 = F1 score (equal weight to precision and recall)
 beta <- 1
 
 # reference threshold for comparison
 reference_threshold <- 0.5
-
-# minimum model probability to flag as potential omission error
-# in hydric soil check
-omission_flag_threshold <- 0.3
-
-# --- Projection ----------------------------------------------
-
-# target CRS for all spatial data
-# this should matches model raster projection its faster project a shp then a tif
-target_crs <- "EPSG:2855"  
-
-# =============================================================

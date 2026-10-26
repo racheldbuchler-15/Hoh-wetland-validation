@@ -5,15 +5,10 @@
 # Date: 2026
 # =============================================================
 
-##check DF naming (commant out as needed) 
-df<- read.csv("E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\outputs\\tables\\delineation_all_models.csv")
-
-#colnames(df)
-
 # --- Load Libraries ------------------------------------------
 #install.packages
-library(pROC)
-library(PRROC)
+library(pROC)#for ROC and AUC calculations
+library(PRROC)#for RRC and AUPRC calculations
 library(ggplot2)
 library(dplyr)
 library(tidyr)
@@ -21,8 +16,12 @@ library(tidyr)
 # --- Source Config -------------------------------------------
 source("E:\\Hoh_wetland_mapping_project\\Hoh_wetland_model_val\\scripts\\00_config.R")
 
+# --- Load CSV from 01 with Model values and delineation data --------------------------------------
+df <- read.csv(file.path(tables_dir, "delineation_all_models.csv"),
+               stringsAsFactors = FALSE)
 
 # --- Define Model Columns --------------------------------------
+#not sure why joint prob has a trailing period in the file name but this seems to work for now 
 model_cols <- c(
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi",
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi",
@@ -30,17 +29,15 @@ model_cols <- c(
   "prob_hydric_covariates",
   "prob_hydric_covariates_SOLUS",
   "hoh_pred_all",
-  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi", "Hoh_WIP_Final_2855"
+  "joint_prob_times_rescaled.tif.", 
+  "combined_wip_2023",
+   "combined_wip_nwi", 
+   "Hoh_WIP_Final_2855"
  
 
 )
 
 # --- Model Display Labels ---------------------------------------
-# edit the right-hand side of each line to change how a model's name
-# appears in plot titles, axis labels, and the results table. File
-# names on disk still use the raw column name above, so nothing
-# breaks if you change these. Every model_cols entry must have an
-# entry here.
 model_labels <- c(
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi" = "4m TW WIP (topo + Sentinel 1/2)",
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi"       = "4m TW WIP (topo only)",
@@ -55,7 +52,7 @@ model_labels <- c(
 )
 
 # --- Define Indicator Levels -------------------------------------
-# each level = which ground-truth column to validate against
+# each level = which ground-truth column to validate against, adding labels 
 levels_list <- list(
   overall   = list(truth_col = "Wetland_De",  label = "Overall Wetland Determination"),
   hydrology = list(truth_col = "Wetland_Hy",  label = "Wetland Hydrology"),
@@ -64,18 +61,16 @@ levels_list <- list(
 )
 
 # --- Level Colors for Summary Bar Charts -------------------------
-# edit these hex codes to change the fill color for each indicator
-# level in the AUC/AUPRC/F1 summary bar charts below. Names on the
-# left must exactly match the "label" values in levels_list above.
+#I might want to ajust these colors later to make things more colorblind friendly, but for now these work. 
 level_colors <- c(
-  "Overall Wetland Determination" = "#b471d3",
-  "Wetland Hydrology"             = "#2166ac",
+  "Overall Wetland Determination" = "#cb86eb",
+  "Wetland Hydrology"             = "#2c7ccc",
   "Hydric Soil"                   = "#5c1c12bb",
-  "Hydrophytic Vegetation"        = "#54941f"
+  "Hydrophytic Vegetation"        = "#4a970b"
 )
 
 # --- Helper Function: Calculate F-beta --------------------------------
-# (F1 = fbeta with beta = 1; also used for threshold selection in 03)
+# F1 = fbeta with beta = 1 also used for threshold selection in 03
 calc_fbeta <- function(predicted_binary, actual_binary, beta){
   TP <- sum(predicted_binary == 1 & actual_binary == 1)
   FP <- sum(predicted_binary == 1 & actual_binary == 0)
@@ -91,6 +86,7 @@ calc_fbeta <- function(predicted_binary, actual_binary, beta){
 }
 
 # --- Helper Function: Prep subset for one model x one level -----------
+#this fucntion helps to subset the data for a given model and indicator level, and prepares it for ROC/PRC analysis.
 prep_level_subset <- function(df, truth_col, prob_col){
   df %>%
     select(truth = all_of(truth_col), prob = all_of(prob_col)) %>%
@@ -136,7 +132,7 @@ for(lvl_name in names(levels_list)){
 
     cat("    n =", n_total, " (wet =", n_wet, ", dry =", n_dry, ")\n")
 
-    # guard against degenerate subsets (all one class, or too few points)
+    # safe guard (all one class, or too few points, so the loop does not crash)
     if(n_total < 5 || n_wet == 0 || n_dry == 0){
       cat("    WARNING: insufficient data for this model x level - skipping\n")
       results_table <- rbind(results_table, data.frame(
@@ -298,10 +294,9 @@ cat("Summary figures saved to", figures_dir, "\n")
 # =============================================================
 
 # --- Choose which models to plot ------------------------------
-# any subset of model_cols; the order here is the order on the plot
-# (top to bottom)
+# any subset of model_cols; the order here is the order on the plot from top to bottom 
 auc_plot_models <- c(
-   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi",
+  "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_s1_s2_tpi50_twi",
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi",
   "prob_NWI",
   "combined_wip_2023",
@@ -309,9 +304,7 @@ auc_plot_models <- c(
   "Hoh_WIP_Final_2855"
 )
 # --- Choose which indicator levels to show --------------------
-# must match the labels in levels_list; remove any you don't want
-# (e.g. drop "Overall Wetland Determination" to show just the
-# three indicators)
+# these can also be changed to any subset of the four levels
 auc_plot_levels <- c(
   "Overall Wetland Determination",
   "Wetland Hydrology",

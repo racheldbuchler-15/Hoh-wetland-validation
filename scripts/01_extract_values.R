@@ -71,20 +71,18 @@ extracted_values <- lapply(model_paths, function(path) {
   
   # extract probability values
   delineation_proj$model_prob <- terra::extract(model_raster, delineation_proj)[, 2]
-  
+
   # add model name column
   delineation_proj$model <- model_name
-  
-  # drop geometry for saving - keeps files small and fast to reload
+  # drop geometry for saving
   delineation_out <- st_drop_geometry(delineation_proj)
-  
   delineation_out
 })
  
 # name list elements by model
 names(extracted_values) <- tools::file_path_sans_ext(basename(model_paths))
 
-# --- Combine All Models into One Wide-Format Table -------------
+# --- Combine All Models into One Wide Format Table -------------
 
 combined <- do.call(rbind, extracted_values)
 
@@ -101,4 +99,3 @@ write.csv(wide_df,
           row.names = FALSE)
 
 cat("Extraction complete. Combined CSV saved to", tables_dir, "\n")
-
