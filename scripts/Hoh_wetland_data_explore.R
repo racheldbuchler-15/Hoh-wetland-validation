@@ -32,10 +32,7 @@ cat("Points with Yes on all three parameters (hydric soil, hydrology, hydrophyti
 # QUESTION: Does hydric soil or veg presence imply hydrology
 # presence? (i.e. is hydrology a near-universal precondition?)
 # =============================================================
- 
-# restrict to plots with valid (non-NA, non-Unknown) values for
-# all three indicators, since that's the only subset where this
-# question is answerable
+
 three_indicator <- delineation %>%
   st_drop_geometry() %>%
   filter(Wetland_Hy %in% c("Yes", "No"),

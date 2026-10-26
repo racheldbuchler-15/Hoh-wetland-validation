@@ -70,3 +70,18 @@ each wetland indicator (hydrology, hydric soil, hydrophytic vegetation) is
 present or absent, and across combinations of indicators. Uses only the
 plots where all three indicators were recorded. No thresholds or
 statistical tests are applied.
+
+### `1m_data_prep.R`: prepare the 1 m WIP models
+
+Combines the tiled outputs of each 1 m WIP model into a single raster
+using `terra::mosaic()`, and writes the result as a TIFF for use in
+this analysis.
+
+### `Hoh_wetland_data-explore.R`: explore the wetland delineation data
+
+Explores the field delineation data to better understand how the three
+wetland indicators (hydrology, hydric soil, and hydrophytic vegetation)
+are distributed across all plots. A main question was which indicator is
+most often limiting for wetland delineation in the Hoh. Our initial
+expectation was that hydric soil or vegetation would be most limiting,
+while hydrology would be the least restrictive (most often present).
