@@ -26,7 +26,7 @@ model_cols <- c(
   "prob_hydric_covariates",
   "prob_hydric_covariates_SOLUS",
   "hoh_pred_all",
-  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi"
+  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi", "Hoh_WIP_Final_2855"
 )
  
 # --- Model Display Labels ---------------------------------------
@@ -39,7 +39,9 @@ model_labels <- c(
   "hoh_pred_all"                                                           = "HIP (Hydrophytic Plant Model)",
   "joint_prob_times_rescaled.tif."                                              = "Joint Probability",
   "combined_wip_2023"                                                        = "1m WIP 2023",
-  "combined_wip_nwi"                                                        = "1m WIP NWI"
+  "combined_wip_nwi"                                                        = "1m WIP NWI",
+  "Hoh_WIP_Final_2855"                                                      = "4m WIP (Final 2023 Paper)"
+
 
 )
 
@@ -54,6 +56,10 @@ results_table <- data.frame(
   youden_precision  = numeric(),
   youden_recall     = numeric(),
   youden_fbeta      = numeric(),
+  maxf_threshold     = numeric(),
+  maxf_precision     = numeric(),
+  maxf_recall        = numeric(),
+  maxf_fbeta         = numeric(),
   ref_threshold     = numeric(),
   ref_precision     = numeric(),
   ref_recall        = numeric(),
@@ -201,16 +207,23 @@ for(model_name in model_cols){
   ref_pred <- ifelse(model_df$model_prob >= reference_threshold, 1, 0)
   ref_metrics <- calc_fbeta(ref_pred, model_df$wetland_binary, beta)
  
-  # --- Append to Results Table -----------------------------
-  results_table <- rbind(results_table, data.frame(
+   # --- Calculate Metrics at Max F-beta Threshold -----------
+  maxf_pred <- ifelse(model_df$model_prob >= best_fbeta_threshold, 1, 0)
+  maxf_metrics <- calc_fbeta(maxf_pred, model_df$wetland_binary, beta)
+
+   results_table <- rbind(results_table, data.frame(
     model              = model_name,
-    display_name      = model_labels[model_name],
+    display_name       = model_labels[model_name],
     youden_threshold   = round(youden_thresh, 3),
     youden_sensitivity = round(best_threshold$sensitivity[1], 3),
     youden_specificity = round(best_threshold$specificity[1], 3),
     youden_precision   = round(youden_metrics$precision, 3),
     youden_recall      = round(youden_metrics$recall, 3),
     youden_fbeta       = round(youden_metrics$fbeta, 3),
+    maxf_threshold     = best_fbeta_threshold,
+    maxf_precision     = round(maxf_metrics$precision, 3),
+    maxf_recall        = round(maxf_metrics$recall, 3),
+    maxf_fbeta         = round(maxf_metrics$fbeta, 3),
     ref_threshold      = reference_threshold,
     ref_precision      = round(ref_metrics$precision, 3),
     ref_recall         = round(ref_metrics$recall, 3),

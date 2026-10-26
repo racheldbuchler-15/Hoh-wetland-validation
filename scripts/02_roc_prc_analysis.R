@@ -30,7 +30,7 @@ model_cols <- c(
   "prob_hydric_covariates",
   "prob_hydric_covariates_SOLUS",
   "hoh_pred_all",
-  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi"
+  "joint_prob_times_rescaled.tif.", "combined_wip_2023", "combined_wip_nwi", "Hoh_WIP_Final_2855"
  
 
 )
@@ -50,7 +50,8 @@ model_labels <- c(
   "hoh_pred_all"                                                           = "10m HIP (Hydrophytic Plant Model)",
   "joint_prob_times_rescaled.tif."                                              = "Joint Probability",
   "combined_wip_2023"                                                        = "1m WIP QC NWI",
-  "combined_wip_nwi"                                                        = "1m WIP NWI"
+  "combined_wip_nwi"                                                        = "1m WIP NWI", 
+  "Hoh_WIP_Final_2855"                                                      = "4m WIP (Final 2023 Paper)"
 )
 
 # --- Define Indicator Levels -------------------------------------
@@ -168,7 +169,7 @@ for(lvl_name in names(levels_list)){
     youden_thresh <- best$threshold[1]  # take first in case of ties
 
     pred <- ifelse(d$prob >= youden_thresh, 1, 0)
-    fbeta_metrics <- calc_fbeta(pred, d$binary, beta = 1)
+    fbeta_metrics <- calc_fbeta(pred, d$binary, beta = beta)
     cat("    F1:", round(fbeta_metrics$fbeta, 3), "\n")
 
     # --- Plot ROC Curve (per model x level) ---
@@ -304,7 +305,8 @@ auc_plot_models <- c(
   "wip_dtw_grad50.300.1000_plan50.300.1000_prof50.300.1000_tpi50_twi",
   "prob_NWI",
   "combined_wip_2023",
-  "combined_wip_nwi"
+  "combined_wip_nwi", 
+  "Hoh_WIP_Final_2855"
 )
 # --- Choose which indicator levels to show --------------------
 # must match the labels in levels_list; remove any you don't want
